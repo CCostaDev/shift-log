@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#072932" />
+<title>Shift Log</title>
+<style>
+  :root {
+    --marine: #0B3D4C;
+    --marine-deep: #072932;
+    --wood: #C8915B;
+    --foam: #EDEAE1;
+    --amber: #E8A33D;
+    --sage: #7A9A7E;
+    --ink: #0B3D4C;
+    --muted: #9FB3B8;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--marine-deep);
+    font-family: 'Avenir Next', 'Helvetica Neue', Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #app {
+    width: 100%;
+    max-width: 480px;
+    min-height: 100vh;
+    margin: 0 auto;
+    background: linear-gradient(180deg, var(--marine) 0%, var(--marine-deep) 100%);
+    color: var(--foam);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 18px 36px;
+    padding-bottom: calc(36px + env(safe-area-inset-bottom));
+    padding-top: calc(20px + env(safe-area-inset-top));
+  }
+  button { font-family: inherit; }
+  input { font-family: inherit; }
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  .brand-row { display: flex; align-items: center; gap: 8px; }
+  .brand-text {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--foam);
+  }
+  .anchor-icon { width: 18px; height: 18px; }
+  .header-actions { display: flex; gap: 8px; }
+  .icon-ghost-btn, .ghost-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 8px 14px;
+    cursor: pointer;
+    color: var(--foam);
+    font-size: 13px;
+  }
+  .icon-ghost-btn { width: 36px; height: 36px; padding: 0; justify-content: center; border-radius: 18px; }
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    color: var(--foam);
+    font-size: 14px;
+  }
+
+  .idle-wrap { display: flex; flex-direction: column; flex: 1; justify-content: center; gap: 28px; }
+  .idle-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 22px 20px;
+  }
+  .idle-eyebrow {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--amber);
+    margin: 0 0 8px;
+  }
+  .idle-heading { font-size: 20px; font-weight: 600; margin: 0 0 10px; line-height: 1.3; }
+  .idle-sub { font-size: 14px; color: var(--muted); margin: 0; line-height: 1.5; }
+
+  .zone-preview-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 16px 16px 12px;
+  }
+  .zone-preview-label {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin: 0 0 10px;
+  }
+  .zone-preview-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+  .zone-preview-row { display: flex; align-items: center; gap: 10px; }
+  .zone-preview-index { font-family: 'Courier New', monospace; font-size: 12px; color: var(--amber); width: 16px; }
+  .zone-preview-name { font-size: 14px; color: var(--foam); }
+  .edit-order-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    padding: 6px 0 2px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 12px;
+    text-decoration: underline;
+  }
+
+  .start-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: var(--amber);
+    border: none;
+    border-radius: 16px;
+    padding: 20px 0;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .start-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .active-wrap { display: flex; flex-direction: column; gap: 18px; flex: 1; }
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+  }
+  .total-label { font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: 2px; color: var(--muted); }
+  .total-time { font-family: 'Courier New', monospace; font-size: 22px; font-weight: 700; color: var(--foam); }
+
+  .zone-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(232,163,61,0.33);
+    border-radius: 18px;
+    padding: 28px 20px;
+    text-align: center;
+  }
+  .zone-eyebrow-row { display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 10px; }
+  .zone-eyebrow { font-family: 'Courier New', monospace; font-size: 12px; letter-spacing: 2px; color: var(--amber); margin: 0; }
+  .back-zone-btn {
+    position: absolute; left: 0;
+    display: flex; align-items: center; gap: 2px;
+    background: none; border: none; cursor: pointer; padding: 2px 4px;
+    color: var(--muted); font-size: 11px;
+  }
+  .zone-name { font-size: 26px; font-weight: 700; margin: 0 0 14px; }
+  .zone-timer { font-family: 'Courier New', monospace; font-size: 44px; font-weight: 700; margin: 0; color: var(--amber); }
+
+  .next-btn {
+    background: var(--sage);
+    border: none;
+    border-radius: 16px;
+    padding: 18px 0;
+    cursor: pointer;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .skip-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: none;
+    border: 1px dashed rgba(255,255,255,0.18);
+    border-radius: 12px;
+    padding: 10px 0;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .completed-list { display: flex; flex-direction: column; gap: 6px; }
+  .completed-row {
+    display: flex; justify-content: space-between;
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    font-size: 13px;
+  }
+  .completed-row .label { color: var(--muted); }
+  .completed-row .value { font-family: 'Courier New', monospace; color: var(--foam); }
+
+  .cancel-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: none; border: none; padding: 10px 0; cursor: pointer;
+    margin-top: auto; color: var(--muted); font-size: 13px;
+  }
+
+  .empty-wrap { display: flex; flex-direction: column; flex: 1; justify-content: center; align-items: center; text-align: center; gap: 6px; }
+  .empty-text { font-size: 17px; font-weight: 600; margin: 0; }
+  .empty-sub { font-size: 13px; color: var(--muted); margin: 0; }
+
+  .log-body { display: flex; flex-direction: column; gap: 24px; }
+  .stat-row { display: flex; gap: 12px; }
+  .stat-box {
+    flex: 1; background: rgba(255,255,255,0.06); border-radius: 14px; padding: 16px 14px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .stat-value { font-family: 'Courier New', monospace; font-size: 24px; font-weight: 700; color: var(--amber); }
+  .stat-label { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); }
+
+  .section-title {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.5px; color: var(--muted);
+    text-transform: uppercase; margin: 0;
+  }
+
+  .kpi-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 16px 16px 14px; }
+  .kpi-label { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); margin: 0 0 8px; }
+  .kpi-value-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+  .kpi-percent { font-family: 'Courier New', monospace; font-size: 30px; font-weight: 700; }
+  .kpi-verdict { font-size: 14px; color: var(--foam); font-weight: 600; }
+  .kpi-detail { font-size: 12px; color: var(--muted); margin: 0; line-height: 1.5; }
+  .kpi-money-row {
+    display: flex; align-items: baseline; gap: 8px; margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .kpi-money-value { font-family: 'Courier New', monospace; font-size: 18px; font-weight: 700; }
+  .kpi-money-label { font-size: 12px; color: var(--muted); }
+
+  .trend-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px 14px 10px; }
+  .trend-labels-row { display: flex; justify-content: space-between; margin-top: 4px; }
+  .trend-label { font-size: 9px; color: var(--muted); font-family: 'Courier New', monospace; flex: 1; text-align: center; }
+
+  .bar-chart { display: flex; flex-direction: column; gap: 12px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; }
+  .bar-label { font-size: 12px; width: 92px; flex-shrink: 0; color: var(--foam); }
+  .bar-track { flex: 1; height: 10px; background: rgba(255,255,255,0.08); border-radius: 6px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--wood); border-radius: 6px; }
+  .bar-value { font-family: 'Courier New', monospace; font-size: 12px; width: 48px; text-align: right; color: var(--muted); flex-shrink: 0; }
+
+  .entry-list { display: flex; flex-direction: column; gap: 10px; }
+  .entry-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px 16px; }
+  .entry-header-row { display: flex; justify-content: space-between; margin-bottom: 2px; align-items: center; }
+  .entry-date { font-size: 14px; font-weight: 700; color: var(--foam); }
+  .entry-total { font-family: 'Courier New', monospace; font-size: 14px; font-weight: 700; color: var(--amber); }
+  .entry-clock-row { margin-bottom: 10px; }
+  .entry-clock { font-size: 12px; color: var(--muted); }
+  .entry-zones { display: flex; flex-wrap: wrap; gap: 6px; }
+  .entry-zone-tag { font-size: 11px; font-family: 'Courier New', monospace; background: rgba(255,255,255,0.08); border-radius: 8px; padding: 4px 8px; color: var(--foam); }
+  .entry-actions { display: flex; align-items: center; gap: 10px; }
+  .edit-entry-btn, .delete-btn {
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; padding: 5px 7px; cursor: pointer;
+  }
+  .delete-btn.confirm { background: var(--amber); border-color: var(--amber); padding: 5px 9px; }
+  .delete-btn.confirm .confirm-text { font-size: 11px; font-weight: 700; color: var(--marine-deep); margin-left: 4px; }
+
+  .edit-hint { font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 0 20px; }
+  .edit-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .edit-row { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 8px 10px; }
+  .edit-arrows { display: flex; flex-direction: column; gap: 2px; }
+  .arrow-btn { display: flex; align-items: center; justify-content: center; width: 22px; height: 18px; background: none; border: none; cursor: pointer; padding: 0; color: var(--foam); }
+  .arrow-btn:disabled { color: rgba(159,179,184,0.3); cursor: default; }
+  .edit-input, .settings-input, .time-input {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: var(--foam);
+    outline: none;
+  }
+  .edit-input { flex: 1; }
+  .remove-row-btn { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: none; border: none; cursor: pointer; }
+  .add-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .add-row-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: var(--sage); border: none; border-radius: 8px; cursor: pointer; flex-shrink: 0; }
+
+  .edit-session-row { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px 12px; }
+  .edit-session-label { flex: 1; font-size: 14px; color: var(--foam); }
+  .edit-session-time-inputs { display: flex; align-items: center; gap: 4px; }
+  .time-input { width: 44px; text-align: center; font-family: 'Courier New', monospace; padding: 8px 4px; }
+  .time-colon { font-size: 14px; color: var(--muted); font-weight: 700; }
+
+  .settings-field-group { margin-bottom: 18px; }
+  .settings-label { display: block; font-size: 13px; font-weight: 600; color: var(--foam); margin-bottom: 8px; }
+  .settings-input { width: 100%; font-size: 16px; font-family: 'Courier New', monospace; padding: 12px 14px; }
+  .settings-sub { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+
+  .spacer { flex: 1; }
+  .hidden { display: none !important; }
+  svg { display: block; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Storage (localStorage-backed, replaces window.storage) ----------
+  const STORAGE_KEY = "route-timer-sessions";
+  const ZONES_KEY = "route-timer-zones";
+  const SETTINGS_KEY = "route-timer-settings";
+
+  const DEFAULT_ZONES = [
+    { id: "sweep", label: "Sweep" },
+    { id: "deck", label: "Deck / Seating" },
+    { id: "toilets", label: "Toilets" },
+    { id: "mop", label: "Mop" },
+  ];
+  const DEFAULT_SETTINGS = { baselineMinutes: 120, hourlyRate: 17.5 };
+
+  function loadJSON(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw);
+      return parsed;
+    } catch (e) {
+      return fallback;
+    }
+  }
+  function saveJSON(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      console.error("Save failed", e);
+    }
+  }
+
+  // ---------- App state ----------
+  let state = {
+    view: "timer", // timer | log | editZones | editSession | settings
+    sessions: loadJSON(STORAGE_KEY, []),
+    zones: loadJSON(ZONES_KEY, DEFAULT_ZONES),
+    settings: Object.assign({}, DEFAULT_SETTINGS, loadJSON(SETTINGS_KEY, {})),
+
+    running: false,
+    currentZoneIdx: 0,
+    sessionStart: null,
+    zoneStart: null,
+    zoneLog: [], // {zoneId, ms, skipped}
+    editingSessionId: null,
+
+    confirmDeleteId: null,
+  };
+
+  let tickInterval = null;
+
+  function persistSessions() { saveJSON(STORAGE_KEY, state.sessions); }
+  function persistZones() { saveJSON(ZONES_KEY, state.zones); }
+  function persistSettings() { saveJSON(SETTINGS_KEY, state.settings); }
+
+  // ---------- Helpers ----------
+  function formatTime(ms) {
+    const totalSec = Math.floor(ms / 1000);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return m + ":" + String(s).padStart(2, "0");
+  }
+  function formatClock(ts) {
+    return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+  function formatDate(ts) {
+    return new Date(ts).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+  }
+  function makeZoneId() {
+    return "zone_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+  }
+  function msToMinSec(ms) {
+    const totalSec = Math.round(ms / 1000);
+    return { min: Math.floor(totalSec / 60), sec: totalSec % 60 };
+  }
+  function minSecToMs(min, sec) {
+    const m = Math.max(0, parseInt(min, 10) || 0);
+    const s = Math.max(0, Math.min(59, parseInt(sec, 10) || 0));
+    return (m * 60 + s) * 1000;
+  }
+  function el(tag, attrs, children) {
+    const node = document.createElement(tag);
+    attrs = attrs || {};
+    Object.keys(attrs).forEach((k) => {
+      if (k === "class") node.className = attrs[k];
+      else if (k === "html") node.innerHTML = attrs[k];
+      else if (k.startsWith("on")) node.addEventListener(k.slice(2).toLowerCase(), attrs[k]);
+      else node.setAttribute(k, attrs[k]);
+    });
+    (children || []).forEach((c) => {
+      if (c == null) return;
+      node.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+    });
+    return node;
+  }
+  function icon(name, size, color) {
+    size = size || 16; color = color || "currentColor";
+    const paths = {
+      anchor: '<circle cx="12" cy="5" r="2"/><path d="M12 7v14M5 12H2a10 10 0 0 0 20 0h-3"/>',
+      bar: '<line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/>',
+      chevronLeft: '<path d="m15 18-6-6 6-6"/>',
+      chevronUp: '<path d="m18 15-6-6-6 6"/>',
+      chevronDown: '<path d="m6 9 6 6 6-6"/>',
+      settings: '<path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/>',
+      plus: '<path d="M5 12h14M12 5v14"/>',
+      trash: '<path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
+      x: '<path d="M18 6 6 18M6 6l12 12"/>',
+      check: '<path d="M20 6 9 17l-5-5"/>',
+      skip: '<path d="m5 4 10 8-10 8V4Z"/><line x1="19" x2="19" y1="5" y2="19"/>',
+      play: '<path d="M5 3 19 12 5 21V3Z"/>',
+      rotate: '<path d="M3 12a9 9 0 1 0 2.6-6.4M3 4v6h6"/>',
+      pencil: '<path d="M21.2 6.4a2 2 0 0 1 0 2.8l-9.6 9.6-4 1 1-4 9.6-9.6a2 2 0 0 1 2.8 0Z"/>',
+    };
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size +
+      '" viewBox="0 0 24 24" fill="none" stroke="' + color +
+      '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths[name] + '</svg>';
+  }
+  function iconEl(name, size, color) {
+    const span = document.createElement("span");
+    span.style.display = "inline-flex";
+    span.innerHTML = icon(name, size, color);
+    return span;
+  }
+
+  const COLORS = {
+    sage: "#7A9A7E", amber: "#E8A33D", muted: "#9FB3B8", foam: "#EDEAE1", marineDeep: "#072932", wood: "#C8915B",
+  };
+
+  // ---------- Render root ----------
+  function render() {
+    const app = document.getElementById("app");
+    app.innerHTML = "";
+    if (state.view === "timer") app.appendChild(renderTimerView());
+    else if (state.view === "log") app.appendChild(renderLogView());
+    else if (state.view === "editZones") app.appendChild(renderEditZonesView());
+    else if (state.view === "editSession") app.appendChild(renderEditSessionView());
+    else if (state.view === "settings") app.appendChild(renderSettingsView());
+  }
+
+  function setState(patch) {
+    Object.assign(state, patch);
+    render();
+  }
+
+  // ---------- Timer logic ----------
+  function startShift() {
+    const t = Date.now();
+    setState({
+      running: true,
+      sessionStart: t,
+      zoneStart: t,
+      currentZoneIdx: 0,
+      zoneLog: [],
+    });
+    startTick();
+  }
+
+  function startTick() {
+    stopTick();
+    tickInterval = setInterval(() => {
+      // Only re-render the live timer bits for performance
+      updateLiveTimers();
+    }, 250);
+  }
+  function stopTick() {
+    if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
+  }
+  function updateLiveTimers() {
+    if (!state.running) return;
+    const now = Date.now();
+    const zoneEl = document.getElementById("zone-timer-value");
+    const totalEl = document.getElementById("total-timer-value");
+    if (zoneEl) zoneEl.textContent = formatTime(now - state.zoneStart);
+    if (totalEl) totalEl.textContent = formatTime(now - state.sessionStart);
+  }
+
+  function nextZone() {
+    const t = Date.now();
+    const elapsed = t - state.zoneStart;
+    const finishedZone = state.zones[state.currentZoneIdx];
+    const updatedLog = state.zoneLog.concat([{ zoneId: finishedZone.id, ms: elapsed, skipped: false }]);
+    if (state.currentZoneIdx < state.zones.length - 1) {
+      setState({ zoneLog: updatedLog, currentZoneIdx: state.currentZoneIdx + 1, zoneStart: t });
+    } else {
+      finishShift(updatedLog, t);
+    }
+  }
+
+  function skipZone() {
+    const t = Date.now();
+    const skippedZone = state.zones[state.currentZoneIdx];
+    const updatedLog = state.zoneLog.concat([{ zoneId: skippedZone.id, ms: 0, skipped: true }]);
+    if (state.currentZoneIdx < state.zones.length - 1) {
+      setState({ zoneLog: updatedLog, currentZoneIdx: state.currentZoneIdx + 1, zoneStart: t });
+    } else {
+      finishShift(updatedLog, t);
+    }
+  }
+
+  function previousZone() {
+    if (state.currentZoneIdx === 0) return;
+    const t = Date.now();
+    const updatedLog = state.zoneLog.slice(0, -1);
+    setState({ zoneLog: updatedLog, currentZoneIdx: state.currentZoneIdx - 1, zoneStart: t });
+  }
+
+  function finishShift(finalLog, endTime) {
+    stopTick();
+    const session = {
+      id: "s_" + state.sessionStart,
+      start: state.sessionStart,
+      end: endTime,
+      totalMs: endTime - state.sessionStart,
+      zones: finalLog.filter((z) => !z.skipped).map((z) => ({ zoneId: z.zoneId, ms: z.ms })),
+    };
+    state.sessions = state.sessions.concat([session]);
+    persistSessions();
+    setState({
+      running: false, sessionStart: null, zoneStart: null, currentZoneIdx: 0, zoneLog: [],
+    });
+  }
+
+  function cancelShift() {
+    stopTick();
+    setState({ running: false, sessionStart: null, zoneStart: null, currentZoneIdx: 0, zoneLog: [] });
+  }
+
+  function deleteSession(id) {
+    state.sessions = state.sessions.filter((s) => s.id !== id);
+    persistSessions();
+    setState({ confirmDeleteId: null });
+  }
+
+  function updateSession(id, updatedZoneEntries) {
+    state.sessions = state.sessions.map((s) => {
+      if (s.id !== id) return s;
+      const totalMs = updatedZoneEntries.reduce((sum, z) => sum + z.ms, 0);
+      return Object.assign({}, s, { zones: updatedZoneEntries, totalMs });
+    });
+    persistSessions();
+  }
+
+  // ---------- Views ----------
+  function renderTimerView() {
+    const screen = el("div", { id: "screen" });
+
+    const header = el("div", { class: "header" }, [
+      el("div", { class: "brand-row" }, [iconEl("anchor", 18, COLORS.amber), el("span", { class: "brand-text" }, ["SHIFT LOG"])]),
+      el("div", { class: "header-actions" }, [
+        !state.running ? el("button", { class: "icon-ghost-btn", onClick: () => setState({ view: "editZones" }) }, [iconEl("settings", 16, COLORS.foam)]) : null,
+        el("button", { class: "ghost-btn", onClick: () => setState({ view: "log" }) }, [iconEl("bar", 16, COLORS.foam), el("span", {}, ["History"])]),
+      ]),
+    ]);
+    screen.appendChild(header);
+
+    if (!state.running) {
+      const count = state.sessions.length;
+      const idleCard = el("div", { class: "idle-card" }, [
+        el("p", { class: "idle-eyebrow" }, ["READY TO LOG"]),
+        el("p", { class: "idle-heading" }, [count === 0 ? "First entry in the log." : count + " shift" + (count === 1 ? "" : "s") + " recorded so far."]),
+        el("p", { class: "idle-sub" }, ["Tap start, then move through each zone as you work. Tap next when you finish one."]),
+      ]);
+
+      const zoneList = el("div", { class: "zone-preview-list" }, state.zones.map((z, i) =>
+        el("div", { class: "zone-preview-row" }, [
+          el("span", { class: "zone-preview-index" }, [String(i + 1)]),
+          el("span", { class: "zone-preview-name" }, [z.label]),
+        ])
+      ));
+      const zonePreview = el("div", { class: "zone-preview-card" }, [
+        el("p", { class: "zone-preview-label" }, ["TODAY'S ORDER"]),
+        zoneList,
+        el("button", { class: "edit-order-btn", onClick: () => setState({ view: "editZones" }) }, [iconEl("settings", 13, COLORS.muted), el("span", {}, ["Edit order or categories"])]),
+      ]);
+
+      const startBtn = el("button", { class: "start-btn", onClick: startShift }, [iconEl("play", 22, COLORS.marineDeep), el("span", {}, ["Start shift"])]);
+
+      const wrap = el("div", { class: "idle-wrap" }, [idleCard, zonePreview, startBtn]);
+      screen.appendChild(wrap);
+    } else {
+      const currentZone = state.zones[state.currentZoneIdx];
+
+      const totalRow = el("div", { class: "total-row" }, [
+        el("span", { class: "total-label" }, ["TOTAL ELAPSED"]),
+        el("span", { class: "total-time", id: "total-timer-value" }, [formatTime(Date.now() - state.sessionStart)]),
+      ]);
+
+      const eyebrowRow = el("div", { class: "zone-eyebrow-row" }, [
+        state.currentZoneIdx > 0
+          ? el("button", { class: "back-zone-btn", onClick: previousZone }, [iconEl("chevronLeft", 12, COLORS.muted), el("span", {}, ["Back"])])
+          : null,
+        el("p", { class: "zone-eyebrow" }, ["ZONE " + (state.currentZoneIdx + 1) + " / " + state.zones.length]),
+      ]);
+
+      const zoneCard = el("div", { class: "zone-card" }, [
+        eyebrowRow,
+        el("p", { class: "zone-name" }, [currentZone.label]),
+        el("p", { class: "zone-timer", id: "zone-timer-value" }, [formatTime(Date.now() - state.zoneStart)]),
+      ]);
+
+      const nextBtn = el("button", { class: "next-btn", onClick: nextZone }, [
+        el("span", {}, [state.currentZoneIdx < state.zones.length - 1 ? "Done — next zone" : "Done — finish shift"]),
+      ]);
+
+      const skipBtn = el("button", { class: "skip-btn", onClick: skipZone }, [
+        iconEl("skip", 14, COLORS.muted),
+        el("span", {}, ["Skip " + currentZone.label + " — not done this shift"]),
+      ]);
+
+      const wrap = el("div", { class: "active-wrap" }, [totalRow, zoneCard, nextBtn, skipBtn]);
+
+      if (state.zoneLog.length > 0) {
+        const completedList = el("div", { class: "completed-list" }, state.zoneLog.map((z) => {
+          const zone = state.zones.find((zz) => zz.id === z.zoneId);
+          return el("div", { class: "completed-row" }, [
+            el("span", { class: "label" }, [zone ? zone.label : ""]),
+            el("span", { class: "value" }, [z.skipped ? "Skipped" : formatTime(z.ms)]),
+          ]);
+        }));
+        wrap.appendChild(completedList);
+      }
+
+      const cancelBtn = el("button", { class: "cancel-btn", onClick: cancelShift }, [iconEl("rotate", 14, COLORS.muted), el("span", {}, ["Cancel shift"])]);
+      wrap.appendChild(cancelBtn);
+
+      screen.appendChild(wrap);
+    }
+
+    return screen;
+  }
+
+  function renderLogView() {
+    const screen = el("div", { id: "screen" });
+    const sessions = state.sessions;
+    const sorted = sessions.slice().sort((a, b) => b.start - a.start);
+    const chronological = sessions.slice().sort((a, b) => a.start - b.start);
+
+    const header = el("div", { class: "header" }, [
+      el("button", { class: "back-btn", onClick: () => setState({ view: "timer" }) }, [iconEl("chevronLeft", 18, COLORS.foam), el("span", {}, ["Back"])]),
+      el("span", { class: "brand-text" }, ["HISTORY"]),
+      el("button", { class: "icon-ghost-btn", onClick: () => setState({ view: "settings" }) }, [iconEl("settings", 16, COLORS.foam)]),
+    ]);
+    screen.appendChild(header);
+
+    if (sessions.length === 0) {
+      screen.appendChild(el("div", { class: "empty-wrap" }, [
+        el("p", { class: "empty-text" }, ["No shifts logged yet."]),
+        el("p", { class: "empty-sub" }, ["Run your first timed shift and it'll show up here."]),
+      ]));
+      return screen;
+    }
+
+    const avgByZone = {};
+    state.zones.forEach((z) => (avgByZone[z.id] = []));
+    sessions.forEach((s) => s.zones.forEach((z) => { if (avgByZone[z.zoneId]) avgByZone[z.zoneId].push(z.ms); }));
+    const zoneAverages = state.zones.map((z) => {
+      const arr = avgByZone[z.id] || [];
+      const avg = arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+      return Object.assign({}, z, { avg, count: arr.length });
+    });
+    const maxAvg = Math.max.apply(null, zoneAverages.map((z) => z.avg).concat([1]));
+    const totalAvg = sessions.length ? sessions.reduce((a, s) => a + s.totalMs, 0) / sessions.length : 0;
+
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const last7Start = now - 7 * DAY_MS;
+    const last7Sessions = chronological.filter((s) => s.start >= last7Start);
+    const trendPoints = last7Sessions.map((s) => ({ x: s.start, y: s.totalMs, label: formatDate(s.start) }));
+
+    const logBody = el("div", { class: "log-body" });
+
+    logBody.appendChild(el("div", { class: "stat-row" }, [
+      el("div", { class: "stat-box" }, [el("span", { class: "stat-value" }, [String(sessions.length)]), el("span", { class: "stat-label" }, ["SHIFTS"])]),
+      el("div", { class: "stat-box" }, [el("span", { class: "stat-value" }, [formatTime(totalAvg)]), el("span", { class: "stat-label" }, ["AVG TOTAL"])]),
+    ]));
+
+    logBody.appendChild(renderEfficiencyKpi(last7Sessions, state.settings.baselineMinutes, state.settings.hourlyRate));
+
+    if (trendPoints.length > 0) {
+      logBody.appendChild(el("p", { class: "section-title" }, ["Last 7 days"]));
+      logBody.appendChild(renderTrendChart(trendPoints, state.settings.baselineMinutes * 60 * 1000));
+    }
+
+    logBody.appendChild(el("p", { class: "section-title" }, ["Average time by zone"]));
+    const barChart = el("div", { class: "bar-chart" }, zoneAverages.map((z) =>
+      el("div", { class: "bar-row" }, [
+        el("span", { class: "bar-label" }, [z.label]),
+        el("div", { class: "bar-track" }, [el("div", { class: "bar-fill", style: "width:" + (z.avg ? Math.max((z.avg / maxAvg) * 100, 6) : 0) + "%" })]),
+        el("span", { class: "bar-value" }, [z.count ? formatTime(z.avg) : "—"]),
+      ])
+    ));
+    logBody.appendChild(barChart);
+
+    logBody.appendChild(el("p", { class: "section-title" }, ["Past entries"]));
+    const entryList = el("div", { class: "entry-list" }, sorted.map((s) => renderEntryCard(s)));
+    logBody.appendChild(entryList);
+
+    screen.appendChild(logBody);
+    return screen;
+  }
+
+  function renderEfficiencyKpi(last7Sessions, baselineMinutes, hourlyRate) {
+    const baselineMs = baselineMinutes * 60 * 1000;
+    const ratePerMs = hourlyRate / (60 * 60 * 1000);
+
+    if (last7Sessions.length === 0) {
+      return el("div", { class: "kpi-card" }, [
+        el("p", { class: "kpi-label" }, ["VS YOUR " + baselineMinutes + "-MIN BASELINE"]),
+        el("p", { class: "kpi-detail" }, ["No shifts logged in the last 7 days yet."]),
+      ]);
+    }
+
+    const diffs = last7Sessions.map((s) => baselineMs - s.totalMs);
+    const totalDiffMs = diffs.reduce((a, b) => a + b, 0);
+    const avgDiffMs = totalDiffMs / diffs.length;
+    const totalMoney = totalDiffMs * ratePerMs;
+    const avgPct = (avgDiffMs / baselineMs) * 100;
+
+    const isFlat = Math.abs(avgPct) < 1;
+    const isAhead = avgDiffMs > 0;
+    const color = isFlat ? COLORS.muted : isAhead ? COLORS.sage : COLORS.amber;
+    const sign = avgPct > 0 ? "+" : "";
+    const moneySign = totalMoney >= 0 ? "+" : "−";
+
+    const card = el("div", { class: "kpi-card", style: "border-color:" + color + "66" });
+    card.appendChild(el("p", { class: "kpi-label" }, ["VS YOUR " + baselineMinutes + "-MIN BASELINE, LAST 7 DAYS"]));
+    card.appendChild(el("div", { class: "kpi-value-row" }, [
+      el("span", { class: "kpi-percent", style: "color:" + color }, [sign + avgPct.toFixed(1) + "%"]),
+      el("span", { class: "kpi-verdict" }, [isFlat ? "Right on baseline" : isAhead ? "Ahead of baseline" : "Behind baseline"]),
+    ]));
+    card.appendChild(el("p", { class: "kpi-detail" }, [
+      "Avg " + formatTime(Math.abs(avgDiffMs)) + " " + (isAhead ? "under" : "over") + " per shift across " + last7Sessions.length + " shift" + (last7Sessions.length === 1 ? "" : "s") + ".",
+    ]));
+    card.appendChild(el("div", { class: "kpi-money-row" }, [
+      el("span", { class: "kpi-money-value", style: "color:" + color }, [moneySign + "€" + Math.abs(totalMoney).toFixed(2)]),
+      el("span", { class: "kpi-money-label" }, [isAhead ? "of paid time saved this week" : "of unpaid extra time this week"]),
+    ]));
+    return card;
+  }
+
+  function renderTrendChart(points, baselineMs) {
+    const width = 320, height = 110, padX = 8, padY = 14;
+    const sortedPts = points.slice().sort((a, b) => a.x - b.x);
+    const values = sortedPts.map((p) => p.y);
+    const allValues = baselineMs != null ? values.concat([baselineMs]) : values;
+    const maxVal = Math.max.apply(null, allValues.concat([1]));
+    const minVal = Math.min.apply(null, allValues.concat([0]));
+    const range = maxVal - minVal || 1;
+
+    const coords = sortedPts.map((p, i) => {
+      const x = sortedPts.length > 1 ? padX + (i / (sortedPts.length - 1)) * (width - padX * 2) : width / 2;
+      const y = height - padY - ((p.y - minVal) / range) * (height - padY * 2);
+      return { x, y, raw: p };
+    });
+    const baselineY = baselineMs != null ? height - padY - ((baselineMs - minVal) / range) * (height - padY * 2) : null;
+
+    const pathD = coords.map((c, i) => (i === 0 ? "M" : "L") + " " + c.x.toFixed(1) + " " + c.y.toFixed(1)).join(" ");
+    const areaD = coords.length > 0
+      ? pathD + " L " + coords[coords.length - 1].x.toFixed(1) + " " + (height - padY) + " L " + coords[0].x.toFixed(1) + " " + (height - padY) + " Z"
+      : "";
+
+    let svg = '<svg viewBox="0 0 ' + width + ' ' + height + '" style="width:100%;height:auto;display:block;">';
+    if (baselineY != null) {
+      svg += '<line x1="' + padX + '" y1="' + baselineY + '" x2="' + (width - padX) + '" y2="' + baselineY + '" stroke="' + COLORS.muted + '" stroke-width="1" stroke-dasharray="4 3"/>';
+      svg += '<text x="' + (width - padX) + '" y="' + (baselineY - 4) + '" text-anchor="end" font-size="8" fill="' + COLORS.muted + '">baseline</text>';
+    }
+    if (areaD) svg += '<path d="' + areaD + '" fill="' + COLORS.wood + '" opacity="0.18"/>';
+    if (pathD) svg += '<path d="' + pathD + '" fill="none" stroke="' + COLORS.wood + '" stroke-width="2" stroke-linejoin="round"/>';
+    coords.forEach((c) => {
+      const dotColor = c.raw.y <= (baselineMs != null ? baselineMs : Infinity) ? COLORS.sage : COLORS.amber;
+      svg += '<circle cx="' + c.x + '" cy="' + c.y + '" r="3.2" fill="' + dotColor + '"/>';
+    });
+    svg += "</svg>";
+
+    const card = el("div", { class: "trend-card", html: svg });
+    const labelsRow = el("div", { class: "trend-labels-row" });
+    sortedPts.forEach((p, i) => {
+      const showLabel = sortedPts.length <= 5 || i === 0 || i === sortedPts.length - 1 || i % Math.ceil(sortedPts.length / 4) === 0;
+      labelsRow.appendChild(el("span", { class: "trend-label" }, [showLabel ? p.label.split(" ").slice(0, 2).join(" ") : ""]));
+    });
+    card.appendChild(labelsRow);
+    return card;
+  }
+
+  function renderEntryCard(s) {
+    const isConfirming = state.confirmDeleteId === s.id;
+    const card = el("div", { class: "entry-card" });
+
+    const editBtn = el("button", { class: "edit-entry-btn", onClick: () => setState({ view: "editSession", editingSessionId: s.id }) }, [iconEl("pencil", 13, COLORS.muted)]);
+    const deleteBtn = el("button", {
+      class: "delete-btn" + (isConfirming ? " confirm" : ""),
+      onClick: () => {
+        if (isConfirming) deleteSession(s.id);
+        else setState({ confirmDeleteId: s.id });
+      },
+    }, [iconEl("trash", 13, isConfirming ? COLORS.marineDeep : COLORS.muted), isConfirming ? el("span", { class: "confirm-text" }, ["Confirm"]) : null]);
+
+    card.appendChild(el("div", { class: "entry-header-row" }, [
+      el("span", { class: "entry-date" }, [formatDate(s.start)]),
+      el("div", { class: "entry-actions" }, [el("span", { class: "entry-total" }, [formatTime(s.totalMs)]), editBtn, deleteBtn]),
+    ]));
+    card.appendChild(el("div", { class: "entry-clock-row" }, [el("span", { class: "entry-clock" }, [formatClock(s.start) + " – " + formatClock(s.end)])]));
+    card.appendChild(el("div", { class: "entry-zones" }, s.zones.map((z) => {
+      const zone = state.zones.find((zz) => zz.id === z.zoneId);
+      return el("span", { class: "entry-zone-tag" }, [(zone ? zone.label : "Removed zone") + " " + formatTime(z.ms)]);
+    })));
+    return card;
+  }
+
+  function renderEditZonesView() {
+    const screen = el("div", { id: "screen" });
+    const draft = state.zones.map((z) => Object.assign({}, z));
+    let newLabel = "";
+
+    function move(idx, dir) {
+      const j = idx + dir;
+      if (j < 0 || j >= draft.length) return;
+      const tmp = draft[idx]; draft[idx] = draft[j]; draft[j] = tmp;
+      rerenderList();
+    }
+    function removeAt(idx) { draft.splice(idx, 1); rerenderList(); }
+    function addZone() {
+      const label = newLabel.trim();
+      if (!label) return;
+      draft.push({ id: makeZoneId(), label });
+      newLabel = "";
+      rerenderList();
+    }
+
+    const header = el("div", { class: "header" }, [
+      el("button", { class: "back-btn", onClick: () => setState({ view: "timer" }) }, [iconEl("x", 18, COLORS.foam), el("span", {}, ["Cancel"])]),
+      el("span", { class: "brand-text" }, ["CATEGORIES"]),
+      el("div", { style: "width:70px" }),
+    ]);
+    screen.appendChild(header);
+    screen.appendChild(el("p", { class: "edit-hint" }, ["Reorder to match how you actually work, rename anything, or add a category. Order here becomes the order in your next shift."]));
+
+    const listContainer = el("div", { class: "edit-list" });
+    const addRowContainer = el("div", { class: "add-row" });
+    const saveBtnContainer = el("div");
+
+    function rerenderList() {
+      listContainer.innerHTML = "";
+      draft.forEach((z, i) => {
+        const upBtn = el("button", { class: "arrow-btn", onClick: () => move(i, -1) }, [iconEl("chevronUp", 14, i === 0 ? "rgba(159,179,184,0.3)" : COLORS.foam)]);
+        if (i === 0) upBtn.disabled = true;
+        const downBtn = el("button", { class: "arrow-btn", onClick: () => move(i, 1) }, [iconEl("chevronDown", 14, i === draft.length - 1 ? "rgba(159,179,184,0.3)" : COLORS.foam)]);
+        if (i === draft.length - 1) downBtn.disabled = true;
+
+        const input = el("input", { class: "edit-input", value: z.label, placeholder: "Category name" });
+        input.value = z.label;
+        input.addEventListener("input", (e) => { z.label = e.target.value; });
+
+        const removeBtn = el("button", { class: "remove-row-btn", onClick: () => removeAt(i) }, [iconEl("trash", 15, COLORS.muted)]);
+
+        listContainer.appendChild(el("div", { class: "edit-row" }, [el("div", { class: "edit-arrows" }, [upBtn, downBtn]), input, removeBtn]));
+      });
+    }
+    rerenderList();
+
+    const newInput = el("input", { class: "edit-input", placeholder: "New category, e.g. Galley" });
+    newInput.addEventListener("input", (e) => { newLabel = e.target.value; });
+    newInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { addZone(); newInput.value = ""; } });
+    const addBtn = el("button", { class: "add-row-btn", onClick: () => { addZone(); newInput.value = ""; } }, [iconEl("plus", 16, COLORS.marineDeep)]);
+    addRowContainer.appendChild(newInput);
+    addRowContainer.appendChild(addBtn);
+
+    const saveBtn = el("button", {
+      class: "start-btn",
+      onClick: () => {
+        if (draft.length === 0 || draft.some((z) => !z.label.trim())) return;
+        state.zones = draft;
+        persistZones();
+        setState({ view: "timer" });
+      },
+    }, [iconEl("check", 20, COLORS.marineDeep), el("span", {}, ["Save categories"])]);
+
+    screen.appendChild(listContainer);
+    screen.appendChild(addRowContainer);
+    screen.appendChild(el("div", { class: "spacer" }));
+    screen.appendChild(saveBtn);
+    return screen;
+  }
+
+  function renderEditSessionView() {
+    const screen = el("div", { id: "screen" });
+    const session = state.sessions.find((s) => s.id === state.editingSessionId);
+    if (!session) {
+      setState({ view: "log" });
+      return screen;
+    }
+
+    const entries = session.zones.map((z) => {
+      const zone = state.zones.find((zz) => zz.id === z.zoneId);
+      const ms = msToMinSec(z.ms);
+      return { zoneId: z.zoneId, label: zone ? zone.label : "Removed zone", min: String(ms.min), sec: String(ms.sec).padStart(2, "0") };
+    });
+
+    const header = el("div", { class: "header" }, [
+      el("button", { class: "back-btn", onClick: () => setState({ view: "log", editingSessionId: null }) }, [iconEl("x", 18, COLORS.foam), el("span", {}, ["Cancel"])]),
+      el("span", { class: "brand-text" }, ["EDIT SHIFT"]),
+      el("div", { style: "width:70px" }),
+    ]);
+    screen.appendChild(header);
+    screen.appendChild(el("p", { class: "edit-hint" }, [formatDate(session.start) + " · adjust any zone time below, or remove an entry if it was logged by mistake."]));
+
+    const listContainer = el("div", { class: "edit-list" });
+    const totalRow = el("div", { class: "total-row" }, [
+      el("span", { class: "total-label" }, ["NEW TOTAL"]),
+      el("span", { class: "total-time", id: "edit-session-total" }, [formatTime(entries.reduce((sum, e) => sum + minSecToMs(e.min, e.sec), 0))]),
+    ]);
+
+    function updateTotal() {
+      const totalMs = entries.reduce((sum, e) => sum + minSecToMs(e.min, e.sec), 0);
+      document.getElementById("edit-session-total").textContent = formatTime(totalMs);
+    }
+
+    function rerenderEntries() {
+      listContainer.innerHTML = "";
+      if (entries.length === 0) {
+        listContainer.appendChild(el("p", { class: "empty-sub" }, ["No zones left in this shift."]));
+        return;
+      }
+      entries.forEach((e, i) => {
+        const minInput = el("input", { class: "time-input", type: "number", min: "0" });
+        minInput.value = e.min;
+        minInput.addEventListener("input", (ev) => { e.min = ev.target.value; updateTotal(); });
+        const secInput = el("input", { class: "time-input", type: "number", min: "0", max: "59" });
+        secInput.value = e.sec;
+        secInput.addEventListener("input", (ev) => { e.sec = ev.target.value; updateTotal(); });
+        const removeBtn = el("button", { class: "remove-row-btn", onClick: () => { entries.splice(i, 1); rerenderEntries(); updateTotal(); } }, [iconEl("trash", 15, COLORS.muted)]);
+
+        listContainer.appendChild(el("div", { class: "edit-session-row" }, [
+          el("span", { class: "edit-session-label" }, [e.label]),
+          el("div", { class: "edit-session-time-inputs" }, [minInput, el("span", { class: "time-colon" }, [":"]), secInput]),
+          removeBtn,
+        ]));
+      });
+    }
+    rerenderEntries();
+
+    const saveBtn = el("button", {
+      class: "start-btn",
+      onClick: () => {
+        const updatedZoneEntries = entries.map((e) => ({ zoneId: e.zoneId, ms: minSecToMs(e.min, e.sec) }));
+        updateSession(session.id, updatedZoneEntries);
+        setState({ view: "log", editingSessionId: null });
+      },
+    }, [iconEl("check", 20, COLORS.marineDeep), el("span", {}, ["Save changes"])]);
+
+    screen.appendChild(listContainer);
+    screen.appendChild(totalRow);
+    screen.appendChild(el("div", { class: "spacer" }));
+    screen.appendChild(saveBtn);
+    return screen;
+  }
+
+  function renderSettingsView() {
+    const screen = el("div", { id: "screen" });
+    let baselineMinutes = String(state.settings.baselineMinutes);
+    let hourlyRate = String(state.settings.hourlyRate);
+
+    const header = el("div", { class: "header" }, [
+      el("button", { class: "back-btn", onClick: () => setState({ view: "log" }) }, [iconEl("x", 18, COLORS.foam), el("span", {}, ["Cancel"])]),
+      el("span", { class: "brand-text" }, ["BASELINE & RATE"]),
+      el("div", { style: "width:70px" }),
+    ]);
+    screen.appendChild(header);
+    screen.appendChild(el("p", { class: "edit-hint" }, ["This is the time you're paid for and what each hour is worth. The efficiency KPI compares your shifts against this."]));
+
+    const minutesInput = el("input", { class: "settings-input", type: "number", min: "1" });
+    minutesInput.value = baselineMinutes;
+    minutesInput.addEventListener("input", (e) => { baselineMinutes = e.target.value; });
+
+    const rateInput = el("input", { class: "settings-input", type: "number", min: "0", step: "0.01" });
+    rateInput.value = hourlyRate;
+    rateInput.addEventListener("input", (e) => { hourlyRate = e.target.value; });
+
+    screen.appendChild(el("div", { class: "settings-field-group" }, [
+      el("label", { class: "settings-label" }, ["Paid time per shift (minutes)"]),
+      minutesInput,
+      el("p", { class: "settings-sub" }, ["e.g. 120 for a 2-hour shift"]),
+    ]));
+    screen.appendChild(el("div", { class: "settings-field-group" }, [
+      el("label", { class: "settings-label" }, ["Hourly rate (€)"]),
+      rateInput,
+      el("p", { class: "settings-sub" }, ["Used to convert time saved or lost into euros"]),
+    ]));
+
+    const saveBtn = el("button", {
+      class: "start-btn",
+      onClick: () => {
+        const m = parseFloat(baselineMinutes);
+        const r = parseFloat(hourlyRate);
+        if (isNaN(m) || m <= 0 || isNaN(r) || r < 0) return;
+        state.settings = { baselineMinutes: m, hourlyRate: r };
+        persistSettings();
+        setState({ view: "log" });
+      },
+    }, [iconEl("check", 20, COLORS.marineDeep), el("span", {}, ["Save"])]);
+
+    screen.appendChild(el("div", { class: "spacer" }));
+    screen.appendChild(saveBtn);
+    return screen;
+  }
+
+  // ---------- Init ----------
+  render();
+})();
+</script>
+</body>
+</html>
